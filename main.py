@@ -113,6 +113,19 @@ async def players(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(text)
 
+async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        global participants, votes, game_started, catastrophe
+
+        for player in participants:
+            if "character" in player:
+                del player["character"]
+
+        votes.clear()
+        game_started = False
+        catastrophe = ""
+
+        await update.message.reply_text("Игра была сброшена. Можно заново набирать игроков.")
+
 
 async def vote(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not game_started:
@@ -158,6 +171,7 @@ app.add_handler(CommandHandler("startgame", startgame))
 app.add_handler(CommandHandler("players", players))
 app.add_handler(CommandHandler("vote", vote))
 app.add_handler(CommandHandler("results", results))
+app.add_handler(CommandHandler("reset", reset))
 
     # ======= Keep-alive Web Server for Render =======
 web_app = Flask("keepalive")
