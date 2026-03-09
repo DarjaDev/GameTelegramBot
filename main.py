@@ -3,6 +3,8 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from dotenv import load_dotenv
 import os
+import threading
+from flask import Flask
 
 load_dotenv()
 
@@ -26,7 +28,6 @@ participants = []  # [{"id":int, "name":str, "character":dict}]
 votes = {}  # {voter_id: target_id}
 game_started = False
 catastrophe = ""
-
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -149,19 +150,31 @@ async def results(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(results_text)
 
+app = ApplicationBuilder().token(TOKEN).build()
 
-def main():
-    app = ApplicationBuilder().token(TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("join", join))
+app.add_handler(CommandHandler("startgame", startgame))
+app.add_handler(CommandHandler("players", players))
+app.add_handler(CommandHandler("vote", vote))
+app.add_handler(CommandHandler("results", results))
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("join", join))
-    app.add_handler(CommandHandler("startgame", startgame))
-    app.add_handler(CommandHandler("players", players))
-    app.add_handler(CommandHandler("vote", vote))
-    app.add_handler(CommandHandler("results", results))
+    # ======= Keep-alive Web Server for Render =======
+web_app = Flask("keepalive")
 
-    app.run_polling()
+@web_app.route("/")
+def home():
+        return "Bot is running!"
+
+def run_bot():
+        """Run Telegram bot polling in a separate thread"""
+        app.run_polling()
 
 
 if __name__ == "__main__":
-    main()
+    # Start bot in a daemon thread
+    threading.Thread(target=run_bot, daemon=True).start()
+
+    # Start Flask server on Render's port
+    port = int(os.environ.get("PORT", 10000))
+    web_app.run(host="0.0.0.0", port=port)
