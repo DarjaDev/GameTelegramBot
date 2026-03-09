@@ -167,14 +167,14 @@ def home():
         return "Bot is running!"
 
 def run_bot():
-        """Run Telegram bot polling in a separate thread"""
-        app.run_polling()
+         # Start Flask server on Render's port
+    port = int(os.environ.get("PORT", 10000))
+    web_app.run(host="0.0.0.0", port=port)
 
 
 if __name__ == "__main__":
     # Start bot in a daemon thread
     threading.Thread(target=run_bot, daemon=True).start()
+    app.run_polling()
 
-    # Start Flask server on Render's port
-    port = int(os.environ.get("PORT", 10000))
-    web_app.run(host="0.0.0.0", port=port)
+
